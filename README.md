@@ -15,7 +15,7 @@ Bez dodatkowej konfiguracji aplikacja działa w **trybie lokalnym**: konta i dan
 
 Build produkcyjny: `npm run build && npm start`.
 
-Wdrożenie na własnym serwerze (Docker + HTTPS): **[DEPLOY.md](DEPLOY.md)**.
+Wdrożenie na własnym serwerze: Linux + Docker: **[DEPLOY.md](DEPLOY.md)**, Windows Server bez Dockera: **[DEPLOY-WINDOWS.md](DEPLOY-WINDOWS.md)**.
 
 ## Stos
 

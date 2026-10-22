@@ -1,6 +1,6 @@
 # Wdrożenie na własnym serwerze
 
-Instrukcja pierwszego uruchomienia SEAL PERFORMANCE na serwerze firmowym (Linux).
+Instrukcja pierwszego uruchomienia SEAL PERFORMANCE na serwerze firmowym (Linux). Dla Windows Server bez Dockera: [DEPLOY-WINDOWS.md](DEPLOY-WINDOWS.md).
 
 ## Najważniejsze: aplikacja wymaga HTTPS
 
