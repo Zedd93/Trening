@@ -1,0 +1,37 @@
+# Uruchomienie: w katalogu deploy/ skopiuj .env.example do .env, uzupełnij
+# i wykonaj `docker compose up -d --build`.
+services:
+  app:
+    build:
+      context: ..
+      args:
+        NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL:-}
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY:-}
+    restart: unless-stopped
+    environment:
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      ASSISTANT_MODEL: ${ASSISTANT_MODEL:-claude-opus-5-5}
+      ASSISTANT_ALLOW_LOCAL: ${ASSISTANT_ALLOW_LOCAL:-false}
+    expose:
+      - "3000"
+
+  # Reverse proxy z HTTPS. Aplikacja wymaga HTTPS: bez niego przeglądarka
+  # blokuje Web Crypto (rejestracja i logowanie) oraz service worker (PWA).
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    depends_on:
+      - app
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS:?Ustaw SITE_ADDRESS w deploy/.env}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  caddy_data:
+  caddy_config:

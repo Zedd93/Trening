@@ -15,6 +15,8 @@ Bez dodatkowej konfiguracji aplikacja działa w **trybie lokalnym**: konta i dan
 
 Build produkcyjny: `npm run build && npm start`.
 
+Wdrożenie na własnym serwerze (Docker + HTTPS): **[DEPLOY.md](DEPLOY.md)**.
+
 ## Stos
 
 Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS 4 · Zustand · IndexedDB (`idb`) · Supabase (PostgreSQL + Auth + RLS) · Recharts · własny silnik animacji SVG · Vitest · Playwright · opcjonalnie `@anthropic-ai/sdk` (asystent AI).
