@@ -87,7 +87,7 @@ test("3–6: animacja, zapis serii, odzyskanie sesji po przeładowaniu i rekomen
   for (const n of [1, 2, 3]) {
     await card.getByLabel(`Seria ${n}: ciężar`, { exact: true }).fill("60");
     await card.getByLabel(`Seria ${n}: powt.`, { exact: true }).fill("8");
-    await card.getByLabel(`Seria ${n}: RIR`).selectOption("2");
+    await card.getByRole("radio", { name: `Seria ${n}: RIR 2`, exact: true }).click();
     await card.getByRole("button", { name: `Seria ${n}: wykonano` }).click();
   }
   await expect(page.getByRole("timer").filter({ hasText: /Odpoczynek|Przerwa/ })).toBeVisible();
@@ -95,6 +95,8 @@ test("3–6: animacja, zapis serii, odzyskanie sesji po przeładowaniu i rekomen
   // Odzyskanie sesji po przeładowaniu
   await page.reload();
   const card2 = page.locator("article").first();
+  // Ukończone ćwiczenie jest zwinięte do podsumowania — rozwijamy je.
+  await card2.getByRole("button", { name: "Edytuj serie" }).click();
   await expect(card2.getByLabel("Seria 1: ciężar", { exact: true })).toHaveValue("60");
   await expect(card2.getByRole("button", { name: "Seria 2: wykonano" })).toHaveAttribute("aria-pressed", "true");
   await expect(page.getByText("W trakcie")).toBeVisible();

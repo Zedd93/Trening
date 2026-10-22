@@ -17,13 +17,17 @@ const TABS = [
 export function DietNav() {
   const path = usePathname();
   return (
-    <nav aria-label="Moduł żywienia" className="-mx-4 mb-5 overflow-x-auto px-4 sm:mx-0 sm:px-0">
-      <ul className="flex min-w-max gap-1.5">
+    <nav aria-label="Moduł żywienia" className="scrollbar-none -mx-4 mb-5 overflow-x-auto border-b border-line px-4 sm:mx-0 sm:px-0">
+      <ul className="flex min-w-max gap-1">
         {TABS.map((t) => {
           const active = t.href === "/dieta" ? path === "/dieta" : path.startsWith(t.href);
           return (
             <li key={t.href}>
-              <Link href={t.href} aria-current={active ? "page" : undefined} className={cx("inline-flex h-9 items-center rounded-full px-3.5 text-sm transition-colors", active ? "bg-olive text-[#10130b] font-semibold" : "bg-surface-2 text-muted hover:text-fg")}>
+              <Link href={t.href} aria-current={active ? "page" : undefined} className={cx(
+                  "relative inline-flex h-11 items-center px-3 font-mono text-[11px] uppercase tracking-[0.12em] transition-colors",
+                  "after:absolute after:inset-x-2 after:-bottom-px after:h-0.5 after:rounded-full after:transition-colors",
+                  active ? "text-olive-strong after:bg-olive-strong" : "text-muted after:bg-transparent hover:text-fg",
+                )}>
                 {t.label}
               </Link>
             </li>

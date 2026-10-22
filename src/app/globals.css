@@ -1,45 +1,59 @@
 @import "tailwindcss";
 
-/* Motyw: ciemny domyślnie, jasny opcjonalnie (data-theme="light") */
+/*
+ * SEAL PERFORMANCE — system wizualny „instrument polowy”.
+ * Grafit + oliwka jako sygnał, kondensowana typografia nagłówków (Big Shoulders),
+ * dane w kroju mono (JetBrains Mono), treść w Instrument Sans.
+ * Tło: mapa warstwicowa + poświata; karty z narożnikami celownika.
+ */
+
 :root {
-  --bg: #0e100f;
-  --surface: #161917;
-  --surface-2: #1d211e;
-  --surface-3: #262b27;
-  --border: #2c322d;
-  --text: #f3f4f0;
-  --muted: #a4aa9f;
-  --olive: #95a54a;
-  --olive-strong: #a9bb55;
-  --olive-dim: #3b4220;
-  --success: #4fb873;
-  --warning: #f0973f;
-  --danger: #e5584f;
-  --figure: #e9ece4;
-  --figure-far: #7c8478;
-  --equip: #95a54a;
-  --equip-2: #59604f;
+  --bg: #0a0c0b;
+  --bg-2: #0f1210;
+  --surface: #131715;
+  --surface-2: #1a1f1c;
+  --surface-3: #242a26;
+  --border: #29302b;
+  --border-strong: #3a433c;
+  --text: #eef0e8;
+  --muted: #9aa294;
+  --olive: #a6b84c;
+  --olive-strong: #c2d45e;
+  --olive-dim: #2c331a;
+  --olive-glow: rgb(166 184 76 / 0.16);
+  --success: #5cc97f;
+  --warning: #ff9a3c;
+  --danger: #ef5a4f;
+  --figure: #eef0e8;
+  --figure-far: #77806f;
+  --equip: #a6b84c;
+  --equip-2: #565e52;
+  --topo: rgb(166 184 76 / 0.055);
   color-scheme: dark;
 }
 
 :root[data-theme="light"] {
-  --bg: #f4f5f1;
-  --surface: #ffffff;
-  --surface-2: #eef0ea;
-  --surface-3: #e2e5dc;
-  --border: #d5d9cf;
-  --text: #151815;
-  --muted: #5d645a;
-  --olive: #5f6d22;
-  --olive-strong: #4d5a19;
-  --olive-dim: #dfe5c4;
-  --success: #23864a;
-  --warning: #b8620f;
+  --bg: #eeefe8;
+  --bg-2: #e6e8de;
+  --surface: #fbfbf7;
+  --surface-2: #f0f1ea;
+  --surface-3: #e2e5d8;
+  --border: #d3d7c8;
+  --border-strong: #b8bea9;
+  --text: #141713;
+  --muted: #5a6155;
+  --olive: #5d6c1c;
+  --olive-strong: #475414;
+  --olive-dim: #e0e7bf;
+  --olive-glow: rgb(93 108 28 / 0.12);
+  --success: #1f8746;
+  --warning: #b9600c;
   --danger: #c0352d;
-  --figure: #1f231f;
+  --figure: #1d211c;
   --figure-far: #8b9286;
-  --equip: #5f6d22;
+  --equip: #5d6c1c;
   --equip-2: #9aa08f;
+  --topo: rgb(93 108 28 / 0.07);
   color-scheme: light;
 }
 
@@ -49,6 +63,7 @@
   --color-surface-2: var(--surface-2);
   --color-surface-3: var(--surface-3);
   --color-line: var(--border);
+  --color-line-strong: var(--border-strong);
   --color-fg: var(--text);
   --color-muted: var(--muted);
   --color-olive: var(--olive);
@@ -57,25 +72,102 @@
   --color-ok: var(--success);
   --color-warn: var(--warning);
   --color-bad: var(--danger);
-  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-sans: "Instrument Sans Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Big Shoulders Display Variable", "Instrument Sans Variable", sans-serif;
+  --font-mono: "JetBrains Mono Variable", ui-monospace, monospace;
 }
 
 html,
 body {
-  background: var(--bg);
   color: var(--text);
+  background-color: var(--bg);
 }
 
+/* Atmosfera: poświata + mapa warstwicowa + drobne ziarno. */
 body {
   font-family: var(--font-sans);
   -webkit-tap-highlight-color: transparent;
-  font-feature-settings: "tnum" 1;
+  background-image:
+    radial-gradient(1200px 600px at 12% -10%, var(--olive-glow), transparent 60%),
+    radial-gradient(900px 500px at 110% 10%, rgb(255 154 60 / 0.04), transparent 60%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='480' height='480' viewBox='0 0 480 480' fill='none' stroke='%23a6b84c' stroke-opacity='0.09' stroke-width='1'%3E%3Cpath d='M-20 120c60-40 120 30 190-10s110-90 190-40 90 60 140 30'/%3E%3Cpath d='M-20 150c70-35 120 35 195-5s115-80 185-35 95 55 140 25'/%3E%3Cpath d='M-20 185c75-25 125 40 200 0s120-70 180-30 100 50 140 20'/%3E%3Cpath d='M-20 300c50 30 110-20 170 10s120 70 190 30 90-40 160-10'/%3E%3Cpath d='M-20 335c55 25 115-25 175 5s115 60 185 25 95-35 160-5'/%3E%3Cpath d='M-20 372c60 20 120-25 180 0s110 50 180 20 100-30 160 0'/%3E%3Cellipse cx='360' cy='420' rx='60' ry='26'/%3E%3Cellipse cx='360' cy='420' rx='38' ry='15'/%3E%3Cellipse cx='90' cy='40' rx='50' ry='20'/%3E%3C/svg%3E");
+  background-attachment: fixed;
+  background-size: auto, auto, 480px 480px;
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 60;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.font-display {
+  font-family: var(--font-display);
+  letter-spacing: 0.01em;
+}
+.font-data {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+/* Mikroetykiety „// SEKCJA” */
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* Karta z narożnikami celownika */
+.hud {
+  position: relative;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--surface) 92%, transparent), color-mix(in srgb, var(--bg-2) 88%, transparent));
+  border: 1px solid var(--border);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.03);
+}
+.hud::before,
+.hud::after {
+  content: "";
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  pointer-events: none;
+  border-color: var(--border-strong);
+  border-style: solid;
+}
+.hud::before {
+  top: -1px;
+  left: -1px;
+  border-width: 2px 0 0 2px;
+  border-top-left-radius: 16px;
+}
+.hud::after {
+  bottom: -1px;
+  right: -1px;
+  border-width: 0 2px 2px 0;
+  border-bottom-right-radius: 16px;
+}
+.hud-accent::before,
+.hud-accent::after {
+  border-color: var(--olive);
+}
+
+/* Paski ostrzegawcze na wyróżnieniach */
+.stripes {
+  background-image: repeating-linear-gradient(-45deg, var(--olive) 0 6px, transparent 6px 12px);
 }
 
 :focus-visible {
   outline: 2px solid var(--olive-strong);
   outline-offset: 2px;
-  border-radius: 6px;
+  border-radius: 8px;
 }
 
 input[type="number"]::-webkit-inner-spin-button,
@@ -88,17 +180,31 @@ input[type="number"] {
 }
 
 dialog::backdrop {
-  background: rgb(0 0 0 / 0.6);
-  backdrop-filter: blur(2px);
+  background: rgb(5 7 6 / 0.72);
+  backdrop-filter: blur(4px);
+}
+dialog[open] {
+  animation: rise 0.28s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
-.fade-in {
-  animation: fade-in 0.25s ease-out both;
+/* Wejście strony: kaskadowe pojawianie się sekcji */
+.stagger > * {
+  animation: rise 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
-@keyframes fade-in {
+.stagger > *:nth-child(2) { animation-delay: 60ms; }
+.stagger > *:nth-child(3) { animation-delay: 120ms; }
+.stagger > *:nth-child(4) { animation-delay: 180ms; }
+.stagger > *:nth-child(5) { animation-delay: 240ms; }
+.stagger > *:nth-child(6) { animation-delay: 300ms; }
+.stagger > *:nth-child(n + 7) { animation-delay: 340ms; }
+
+.fade-in {
+  animation: rise 0.35s ease-out both;
+}
+@keyframes rise {
   from {
     opacity: 0;
-    transform: translateY(4px);
+    transform: translateY(8px);
   }
   to {
     opacity: 1;
@@ -106,8 +212,31 @@ dialog::backdrop {
   }
 }
 
+.pop {
+  animation: pop 0.32s cubic-bezier(0.3, 1.6, 0.5, 1) both;
+}
+@keyframes pop {
+  0% { transform: scale(0.8); }
+  100% { transform: scale(1); }
+}
+
+@keyframes scan {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(300%); }
+}
+
 .bar-fill {
-  transition: width 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition: width 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.dial-arc {
+  transition: stroke-dashoffset 1s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.scrollbar-none {
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
 }
 
 .safe-bottom {
@@ -119,6 +248,7 @@ dialog::backdrop {
   *::before,
   *::after {
     animation-duration: 0.001ms !important;
+    animation-delay: 0ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
     scroll-behavior: auto !important;
@@ -127,11 +257,15 @@ dialog::backdrop {
 
 @media print {
   nav,
+  aside,
   .no-print {
     display: none !important;
   }
   body {
     background: #fff;
     color: #000;
+  }
+  body::after {
+    display: none;
   }
 }

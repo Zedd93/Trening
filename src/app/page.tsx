@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useActiveProgram, useData, useGoals, useProfile, useToday } from "@/lib/hooks";
-import { Badge, Card, LinkButton, Notice, PageHeader, Progress, Segmented, Select, Stat, cx } from "@/components/ui";
+import { Badge, Card, Gauge, LinkButton, Notice, PageHeader, Progress, Segmented, Select, Stat, cx } from "@/components/ui";
 import { COLORS, TimeChart, SimpleBars } from "@/components/charts";
 import { QuickCheckin } from "@/components/QuickCheckin";
 import { ExerciseAnimation } from "@/components/ExerciseAnimation";
@@ -20,11 +20,13 @@ export default function Dashboard() {
   const [view, setView] = useState<"day" | "week" | "month">("day");
   const profile = useProfile();
   const goals = useGoals();
+  const todayDate = useToday();
   return (
     <>
       <PageHeader
-        title={`Cześć${profile?.display_name ? `, ${profile.display_name}` : ""}`}
-        subtitle={`Cel: ${GOAL_LABELS[goals.primary]}`}
+        eyebrow={`// Odprawa · ${formatDateLong(todayDate)}`}
+        title={profile?.display_name ? `Cześć, ${profile.display_name}` : "Pulpit"}
+        subtitle={`Cel główny: ${GOAL_LABELS[goals.primary]}`}
         action={
           <Segmented
             ariaLabel="Widok pulpitu"
@@ -86,87 +88,135 @@ function DayView() {
   const firstEx = sessionForCta ? sessionExercises(data, sessionForCta.id)[0] : undefined;
   const pendingRecs = Object.values(data.progression_recommendations).filter((r) => r.status === "pending" && r.target_session_id);
 
-  return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center gap-2 text-sm text-muted">
-        <span className="font-medium text-fg">{formatDateLong(todayDate)}</span>
-        {program && dayOfProgram && dayOfProgram >= 1 && dayOfProgram <= 28 && (
-          <Badge tone="olive">
-            Dzień {dayOfProgram} programu · {WEEK_PHASES[week!].name}
-          </Badge>
-        )}
-        {program && dayOfProgram !== null && dayOfProgram < 1 && <Badge>Program startuje {formatDateShort(program.start_date)}</Badge>}
-      </div>
+  const exList = sessionForCta ? sessionExercises(data, sessionForCta.id).filter((e) => e.block !== "conditioning") : [];
+  const trendLast = trend.at(-1);
+  const trendPrev = trend.filter((p) => p.date <= addDays(todayDate, -7)).at(-1);
 
-      <div className="grid gap-4 lg:grid-cols-3">
-        <Card className="lg:col-span-2" title={todaySession ? "Dzisiejszy trening" : "Dziś dzień bez treningu siłowego"}>
+  return (
+    <div className="stagger flex flex-col gap-4">
+      {/* Misja dnia */}
+      <div className="grid gap-4 lg:grid-cols-[1.6fr_1fr]">
+        <section className="hud hud-accent relative overflow-hidden rounded-2xl p-5 sm:p-6">
+          <div aria-hidden className="stripes absolute right-0 top-0 h-1.5 w-40 opacity-60" />
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="eyebrow text-olive-strong">{todaySession ? "Misja dnia" : "Następna misja"}</span>
+            {program && dayOfProgram !== null && dayOfProgram >= 1 && dayOfProgram <= 28 && week && <Badge tone="olive">Dzień {dayOfProgram} · {WEEK_PHASES[week].name.split(" — ")[1]}</Badge>}
+            {program && dayOfProgram !== null && dayOfProgram < 1 && <Badge>Start {formatDateShort(program.start_date)}</Badge>}
+          </div>
           {sessionForCta ? (
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-              {firstEx && <ExerciseAnimation exerciseId={firstEx.exercise_id} size="sm" />}
+            <div className="mt-3 flex gap-5">
               <div className="min-w-0 flex-1">
-                <div className="text-lg font-semibold">{sessionForCta.title}</div>
-                <div className="text-sm text-muted">{sessionForCta.focus}</div>
-                {!todaySession && <div className="mt-1 text-sm text-muted">Następny: {formatDateLong(sessionForCta.scheduled_date)}</div>}
-                <div className="mt-2 text-xs text-muted">
-                  {sessionExercises(data, sessionForCta.id)
-                    .slice(0, 4)
-                    .map((e) => EXERCISE_MAP[e.exercise_id]?.name)
-                    .join(" · ")}
-                </div>
+                <h2 className="font-display text-[34px] font-extrabold uppercase leading-[0.9] tracking-wide sm:text-5xl">
+                  {sessionForCta.title.split(" — ")[0]}
+                  <span className="block text-olive-strong">{sessionForCta.title.split(" — ")[1]}</span>
+                </h2>
+                <p className="mt-2 text-sm text-muted">
+                  {!todaySession && <span className="text-fg">{formatDateLong(sessionForCta.scheduled_date)} · </span>}
+                  {sessionForCta.focus}
+                </p>
+                <ol className="mt-4 grid gap-1.5 sm:grid-cols-2">
+                  {exList.slice(0, 6).map((e, i) => (
+                    <li key={e.id} className="flex items-baseline gap-2 text-sm">
+                      <span className="font-data text-xs text-olive-strong">{String(i + 1).padStart(2, "0")}</span>
+                      <span className="truncate">{EXERCISE_MAP[e.exercise_id]?.name}</span>
+                    </li>
+                  ))}
+                </ol>
               </div>
+              {firstEx && (
+                <div className="hidden shrink-0 sm:block">
+                  <ExerciseAnimation exerciseId={firstEx.exercise_id} size="md" />
+                </div>
+              )}
             </div>
           ) : (
-            <p className="text-sm text-muted">Brak zaplanowanych treningów. Wygeneruj kolejny cykl w zakładce Trening.</p>
+            <p className="mt-3 text-sm text-muted">Brak zaplanowanych treningów. Wygeneruj kolejny cykl w zakładce Trening.</p>
           )}
-          <div className="mt-4 grid gap-2 sm:grid-cols-2">
+          <div className="mt-5 grid gap-2 sm:grid-cols-[1.4fr_1fr]">
             {sessionForCta && (
               <LinkButton href={`/trening/sesja/${sessionForCta.id}`} variant="primary" size="lg" className="w-full">
                 {sessionForCta.status === "in_progress" ? "Kontynuuj trening" : todaySession ? "Rozpocznij dzisiejszy trening" : "Zobacz następny trening"}
               </LinkButton>
             )}
-            <LinkButton href="/dieta?dodaj=1" variant="secondary" size="lg" className="w-full">
+            <LinkButton href="/dieta?dodaj=1" variant="outline" size="lg" className="w-full">
               Dodaj posiłek
             </LinkButton>
           </div>
-        </Card>
+        </section>
 
-        <Card title="Plan tygodnia">
-          {weekSessions.length ? (
-            <Progress label="Treningi" value={weekDone} max={weekSessions.length} showValues={`${weekDone}/${weekSessions.length}`} />
+        <Card eyebrow="Paliwo · dziś" title="Bilans" action={<Link href="/dieta" className="font-mono text-xs uppercase tracking-wider text-olive-strong">Dziennik →</Link>}>
+          {dt ? (
+            <>
+              <div className="flex justify-around gap-2">
+                <Gauge value={kcal} max={dt.kcal} label="Kalorie" unit="kcal" size={128} />
+                <Gauge value={protein} max={dt.protein_g} label="Białko" unit="g" size={128} />
+              </div>
+              <div className="mt-4 grid grid-cols-2 gap-2 border-t border-line pt-3 text-center">
+                <div>
+                  <div className="eyebrow">Pozostało</div>
+                  <div className={cx("font-data mt-1 text-lg font-semibold", dt.kcal - kcal < 0 ? "text-warn" : "text-ok")}>{fmt(dt.kcal - kcal)} kcal</div>
+                </div>
+                <div>
+                  <div className="eyebrow">Do celu białka</div>
+                  <div className="font-data mt-1 text-lg font-semibold">{fmt(Math.max(0, dt.protein_g - protein))} g</div>
+                </div>
+              </div>
+            </>
           ) : (
-            <p className="text-sm text-muted">W tym tygodniu brak zaplanowanych treningów{program && program.start_date > todayDate ? ` — program startuje ${formatDateShort(program.start_date)}` : ""}.</p>
+            <p className="text-sm text-muted">Ustaw cele żywieniowe.</p>
           )}
-          <div className="mt-3">
-            <Progress label="Dni z pełnym dziennikiem" value={loggedDays} max={diffDays(todayDate, wk) + 1} showValues={`${loggedDays}/${diffDays(todayDate, wk) + 1}`} />
-          </div>
-          <div className="mt-4 grid grid-cols-7 gap-1 text-center text-[11px]">
+        </Card>
+      </div>
+
+      {/* Tydzień + wskaźniki */}
+      <div className="grid gap-4 lg:grid-cols-[1.6fr_1fr]">
+        <Card eyebrow={`Tydzień · ${weekDone}/${weekSessions.length || 0} treningów`} title="Plan tygodnia">
+          <div className="grid grid-cols-7 gap-1.5">
             {rangeDays(wk, addDays(wk, 6)).map((d, i) => {
               const s = sessions.find((x) => x.scheduled_date === d);
+              const isToday = d === todayDate;
               return (
-                <div key={d} className={cx("rounded-lg py-1.5", d === todayDate ? "bg-surface-3" : "")}>
-                  <div className="text-muted">{WEEKDAYS_SHORT[i]}</div>
-                  <div className={cx("mt-1 font-semibold", s?.status === "completed" ? "text-ok" : s ? "text-olive-strong" : "text-muted")}>{s ? s.template : "·"}</div>
-                </div>
+                <Link
+                  key={d}
+                  href={s ? `/trening/sesja/${s.id}` : "/trening"}
+                  className={cx(
+                    "flex aspect-[3/4] flex-col items-center justify-between rounded-lg border py-2 transition-colors",
+                    isToday ? "border-olive bg-olive-dim/40" : "border-line bg-bg/40 hover:border-line-strong",
+                  )}
+                  aria-label={`${WEEKDAYS_SHORT[i]} ${formatDateShort(d)}${s ? `: trening ${s.template}` : ": odpoczynek"}`}
+                >
+                  <span className={cx("font-mono text-[10px] uppercase", isToday ? "text-olive-strong" : "text-muted")}>{WEEKDAYS_SHORT[i]}</span>
+                  <span
+                    className={cx(
+                      "font-display text-2xl font-extrabold leading-none",
+                      s?.status === "completed" ? "text-ok" : s?.status === "skipped" ? "text-warn line-through" : s ? "text-fg" : "text-muted/40",
+                    )}
+                  >
+                    {s ? s.template : "·"}
+                  </span>
+                  <span className="font-data text-[10px] text-muted">{formatDateShort(d).slice(0, 2)}</span>
+                </Link>
               );
             })}
           </div>
-        </Card>
-      </div>
-
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Stat label="Kalorie spożyte" value={fmt(kcal)} sub={dt ? `cel ${dt.kcal} kcal` : undefined} />
-        <Stat label="Pozostało" value={dt ? fmt(dt.kcal - kcal) : "—"} sub="kcal" tone={dt && dt.kcal - kcal < 0 ? "warn" : "ok"} />
-        <Stat label="Białko" value={`${fmt(protein)} g`} sub={dt ? `cel ${dt.protein_g} g` : undefined} tone={dt && protein >= dt.protein_g * 0.95 ? "ok" : undefined} />
-        <Stat label="Aktualna masa" value={weight ? `${fmt(weight, 1)} kg` : "—"} sub={trend.length ? `trend ${fmt(trend.at(-1)!.trend, 1)} kg` : "zważ się"} />
-      </div>
-      {dt && (
-        <Card>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <Progress label="Kalorie" value={kcal} max={dt.kcal} showValues={`${fmt(kcal)} / ${dt.kcal} kcal`} />
-            <Progress label="Białko" value={protein} max={dt.protein_g} showValues={`${fmt(protein)} / ${dt.protein_g} g`} />
+          <div className="mt-4">
+            <Progress label="Dni z pełnym dziennikiem" value={loggedDays} max={diffDays(todayDate, wk) + 1} showValues={`${loggedDays}/${diffDays(todayDate, wk) + 1}`} />
           </div>
         </Card>
-      )}
+        <div className="grid grid-cols-2 gap-3">
+          <Stat label="Masa ciała" value={weight ? `${fmt(weight, 1)}` : "—"} sub={trendLast ? `trend ${fmt(trendLast.trend, 1)} kg` : "zważ się rano"} />
+          <Stat
+            label="Zmiana 7 dni"
+            value={trendLast && trendPrev ? `${trendLast.trend - trendPrev.trend >= 0 ? "+" : ""}${fmt(trendLast.trend - trendPrev.trend, 1)}` : "—"}
+            sub="kg (trend)"
+          />
+          <Stat label="Treningi w cyklu" value={`${sessions.filter((s) => s.status === "completed").length}/${sessions.length}`} sub="ukończone" />
+          <Link href="/asystent" className="hud group flex flex-col justify-between rounded-xl p-3 hover:border-olive">
+            <span className="eyebrow">Asystent</span>
+            <span className="text-sm leading-snug">Zapytaj, co trenować i ile białka zostało →</span>
+          </Link>
+        </div>
+      </div>
 
       {alerts.map((a) => (
         <Notice key={a.title} tone={a.level === "warning" ? "warn" : "info"} title={a.title}>

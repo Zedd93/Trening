@@ -13,7 +13,7 @@ import { generateProgram, pickTrainingDays } from "@/lib/training/generator";
 import { defaultMealNames } from "@/lib/nutrition/meals";
 import { addDays, formatDateFull, startOfWeek, today, WEEKDAYS_LONG, WEEKDAYS_SHORT } from "@/lib/utils/dates";
 import { bmi } from "@/lib/nutrition/calculator";
-import { useApp } from "@/lib/data/store";
+import { flushWrites, useApp } from "@/lib/data/store";
 import { GOAL_LABELS } from "@/lib/labels";
 
 const EQUIPMENT_PRESETS: { label: string; items: Equipment[] }[] = [
@@ -117,10 +117,12 @@ export default function OnboardingPage() {
     return { t, prog };
   }, [step, p, finalPrefs, goals, primary, startDate, maintain]);
 
-  function finish() {
+  async function finish() {
     setBusy(true);
     try {
       completeOnboarding({ ...p, target_weight_kg: maintain ? p.weight_kg : p.target_weight_kg }, goals, primary, finalPrefs, startDate);
+      // Przejście na pulpit dopiero, gdy plan jest zapisany na urządzeniu.
+      await flushWrites();
       router.replace("/");
     } catch (e) {
       setErrors([(e as Error).message]);
@@ -132,22 +134,26 @@ export default function OnboardingPage() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 pb-16 pt-6">
-      <div className="mb-6 flex items-center gap-3">
+      <div className="mb-5 flex items-center gap-3">
         <IconLogo />
-        <div>
-          <h1 className="text-xl font-bold">Konfigurator</h1>
-          <p className="text-sm text-muted">
-            Krok {step + 1} z {STEPS.length}: {STEPS[step]}
-          </p>
+        <span className="eyebrow">// Konfigurator planu</span>
+      </div>
+      <div className="mb-5">
+        <div className="font-data text-xs text-olive-strong">
+          Krok {String(step + 1).padStart(2, "0")} / {String(STEPS.length).padStart(2, "0")}
         </div>
+        <h1 className="font-display mt-1 text-4xl font-extrabold uppercase leading-none tracking-wide sm:text-5xl">{STEPS[step]}</h1>
+        <p className="sr-only">
+          Krok {step + 1} z {STEPS.length}: {STEPS[step]}
+        </p>
       </div>
       <div className="mb-6 flex gap-1" aria-hidden>
         {STEPS.map((_, i) => (
-          <div key={i} className={cx("h-1.5 flex-1 rounded-full", i <= step ? "bg-olive" : "bg-surface-3")} />
+          <div key={i} className={cx("h-1.5 flex-1 rounded-full transition-colors duration-500", i < step ? "bg-olive/60" : i === step ? "bg-olive-strong" : "bg-surface-3")} />
         ))}
       </div>
 
-      <div className="flex flex-col gap-5 rounded-2xl border border-line bg-surface p-5">
+      <div key={step} className="hud fade-in flex flex-col gap-5 rounded-2xl p-5">
         {step === 0 && (
           <>
             <Input label="Imię lub pseudonim" value={p.display_name} onChange={(e) => up({ display_name: e.target.value })} />
@@ -401,7 +407,7 @@ export default function OnboardingPage() {
           </Notice>
         )}
 
-        <div className="flex justify-between gap-3 pt-2">
+        <div className="sticky bottom-0 z-30 -mx-5 -mb-5 flex justify-between gap-3 rounded-b-2xl border-t border-line bg-surface/95 px-5 py-3 backdrop-blur safe-bottom sm:static sm:z-auto sm:m-0 sm:rounded-none sm:border-0 sm:bg-transparent sm:p-0 sm:pt-2 sm:backdrop-blur-none">
           <Button variant="ghost" onClick={() => setStep((s) => Math.max(0, s - 1))} disabled={step === 0}>
             ← Wstecz
           </Button>
@@ -411,7 +417,7 @@ export default function OnboardingPage() {
             </Button>
           ) : (
             <Button variant="primary" onClick={finish} disabled={busy}>
-              Utwórz mój plan
+              {busy ? "Zapisywanie planu…" : "Utwórz mój plan"}
             </Button>
           )}
         </div>
@@ -422,9 +428,9 @@ export default function OnboardingPage() {
 
 function SummaryTile({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl bg-surface-2 p-3 text-center">
-      <div className="text-xs text-muted">{label}</div>
-      <div className="text-lg font-semibold">{value}</div>
+    <div className="rounded-xl border border-line bg-surface-2/60 p-3 text-center">
+      <div className="eyebrow">{label}</div>
+      <div className="font-data mt-1 text-lg font-semibold">{value}</div>
     </div>
   );
 }

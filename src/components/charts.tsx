@@ -4,11 +4,11 @@ import { Area, Bar, BarChart, CartesianGrid, ComposedChart, Legend, Line, LineCh
 import { usePrefersReducedMotion } from "@/lib/hooks";
 import { formatDateShort } from "@/lib/utils/dates";
 
-const axis = { stroke: "var(--muted)", fontSize: 11, tickLine: false, axisLine: false } as const;
+const axis = { stroke: "var(--muted)", fontSize: 10.5, fontFamily: "var(--font-mono)", tickLine: false, axisLine: false } as const;
 const grid = <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" vertical={false} />;
 const tooltipStyle = {
-  contentStyle: { background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 12, color: "var(--text)", fontSize: 12 },
-  labelStyle: { color: "var(--muted)" },
+  contentStyle: { background: "var(--surface)", border: "1px solid var(--border-strong)", borderRadius: 10, color: "var(--text)", fontSize: 12, fontFamily: "var(--font-mono)" },
+  labelStyle: { color: "var(--muted)", textTransform: "uppercase" as const, letterSpacing: "0.08em", fontSize: 10.5 },
   cursor: { stroke: "var(--border)" },
 };
 
@@ -49,7 +49,7 @@ export function TimeChart({
           <XAxis dataKey="date" tickFormatter={(d: string) => formatDateShort(d)} {...axis} minTickGap={18} />
           <YAxis {...axis} domain={yDomain ?? ["auto", "auto"]} unit={unit ? ` ${unit}` : undefined} width={58} />
           <Tooltip {...tooltipStyle} labelFormatter={(d) => formatDateShort(String(d))} formatter={(v) => (typeof v === "number" ? `${v.toLocaleString("pl-PL", { maximumFractionDigits: 1 })}${unit ? " " + unit : ""}` : String(v))} />
-          {series.length > 1 && <Legend wrapperStyle={{ fontSize: 12 }} />}
+          {series.length > 1 && <Legend wrapperStyle={{ fontSize: 11, fontFamily: "var(--font-mono)", textTransform: "uppercase", letterSpacing: "0.06em" }} />}
           {reference && <ReferenceLine y={reference.y} stroke={reference.color ?? "var(--warning)"} strokeDasharray="4 4" label={{ value: reference.label, fill: "var(--muted)", fontSize: 11, position: "insideTopRight" }} />}
           {series.map((s) =>
             s.type === "bar" ? (
@@ -87,7 +87,7 @@ export function SimpleBars({ data, xKey, bars, height = 200, ariaLabel, unit }: 
           <XAxis dataKey={xKey} {...axis} />
           <YAxis {...axis} width={52} unit={unit ? ` ${unit}` : undefined} />
           <Tooltip {...tooltipStyle} />
-          {bars.length > 1 && <Legend wrapperStyle={{ fontSize: 12 }} />}
+          {bars.length > 1 && <Legend wrapperStyle={{ fontSize: 11, fontFamily: "var(--font-mono)", textTransform: "uppercase", letterSpacing: "0.06em" }} />}
           {bars.map((b) => (
             <Bar key={b.key} dataKey={b.key} name={b.name} fill={b.color} radius={[4, 4, 0, 0]} isAnimationActive={!reduced} />
           ))}
