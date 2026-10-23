@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import type { WorkoutSession } from "@/lib/domain/types";
 import { useActiveProgram, useData, useGoals, useProfile, useToday } from "@/lib/hooks";
 import { Badge, Card, Gauge, LinkButton, Notice, PageHeader, Progress, Segmented, Select, Stat, cx } from "@/components/ui";
 import { COLORS, TimeChart, SimpleBars } from "@/components/charts";
@@ -171,34 +172,7 @@ function DayView() {
       {/* Tydzień + wskaźniki */}
       <div className="grid gap-4 lg:grid-cols-[1.6fr_1fr]">
         <Card eyebrow={`Tydzień · ${weekDone}/${weekSessions.length || 0} treningów`} title="Plan tygodnia">
-          <div className="grid grid-cols-7 gap-1.5">
-            {rangeDays(wk, addDays(wk, 6)).map((d, i) => {
-              const s = sessions.find((x) => x.scheduled_date === d);
-              const isToday = d === todayDate;
-              return (
-                <Link
-                  key={d}
-                  href={s ? `/trening/sesja/${s.id}` : "/trening"}
-                  className={cx(
-                    "flex aspect-[3/4] flex-col items-center justify-between rounded-lg border py-2 transition-colors",
-                    isToday ? "border-olive bg-olive-dim/40" : "border-line bg-bg/40 hover:border-line-strong",
-                  )}
-                  aria-label={`${WEEKDAYS_SHORT[i]} ${formatDateShort(d)}${s ? `: trening ${s.template}` : ": odpoczynek"}`}
-                >
-                  <span className={cx("font-mono text-[10px] uppercase", isToday ? "text-olive-strong" : "text-muted")}>{WEEKDAYS_SHORT[i]}</span>
-                  <span
-                    className={cx(
-                      "font-display text-2xl font-extrabold leading-none",
-                      s?.status === "completed" ? "text-ok" : s?.status === "skipped" ? "text-warn line-through" : s ? "text-fg" : "text-muted/40",
-                    )}
-                  >
-                    {s ? s.template : "·"}
-                  </span>
-                  <span className="font-data text-[10px] text-muted">{formatDateShort(d).slice(0, 2)}</span>
-                </Link>
-              );
-            })}
-          </div>
+          <WeekStrip sessions={sessions} weekStart={wk} todayDate={todayDate} />
           <div className="mt-4">
             <Progress label="Dni z pełnym dziennikiem" value={loggedDays} max={diffDays(todayDate, wk) + 1} showValues={`${loggedDays}/${diffDays(todayDate, wk) + 1}`} />
           </div>
@@ -245,6 +219,39 @@ function DayView() {
   );
 }
 
+function WeekStrip({ sessions, weekStart, todayDate }: { sessions: WorkoutSession[]; weekStart: string; todayDate: string }) {
+  return (
+    <div className="grid grid-cols-7 gap-1.5">
+      {rangeDays(weekStart, addDays(weekStart, 6)).map((d, i) => {
+        const s = sessions.find((x) => x.scheduled_date === d);
+        const isToday = d === todayDate;
+        return (
+          <Link
+            key={d}
+            href={s ? `/trening/sesja/${s.id}` : "/trening"}
+            className={cx(
+              "flex h-24 flex-col items-center justify-between rounded-lg border py-2 transition-colors sm:h-28",
+              isToday ? "border-olive bg-olive-dim/40" : "border-line bg-bg/40 hover:border-line-strong",
+            )}
+            aria-label={`${WEEKDAYS_SHORT[i]} ${formatDateShort(d)}${s ? `: trening ${s.template}` : ": odpoczynek"}`}
+          >
+            <span className={cx("font-mono text-[10px] uppercase", isToday ? "text-olive-strong" : "text-muted")}>{WEEKDAYS_SHORT[i]}</span>
+            <span
+              className={cx(
+                "font-display text-2xl font-extrabold leading-none",
+                s?.status === "completed" ? "text-ok" : s?.status === "skipped" ? "text-warn line-through" : s ? "text-fg" : "text-muted/40",
+              )}
+            >
+              {s ? s.template : "·"}
+            </span>
+            <span className="font-data text-[10px] text-muted">{formatDateShort(d).slice(0, 2)}</span>
+          </Link>
+        );
+      })}
+    </div>
+  );
+}
+
 function WeekView() {
   const data = useData();
   const todayDate = useToday();
@@ -263,24 +270,9 @@ function WeekView() {
 
   return (
     <div className="flex flex-col gap-4">
-      <Card title="Kalendarz treningów — bieżący tydzień">
-        <div className="grid grid-cols-7 gap-1.5 text-center text-xs">
-          {rangeDays(wk, addDays(wk, 6)).map((d, i) => {
-            const s = sessions.filter((x) => x.scheduled_date === d);
-            return (
-              <div key={d} className={cx("rounded-xl border p-2", d === todayDate ? "border-olive" : "border-line")}>
-                <div className="text-muted">{WEEKDAYS_SHORT[i]}</div>
-                <div className="text-[11px] text-muted">{formatDateShort(d)}</div>
-                {s.map((x) => (
-                  <Link key={x.id} href={`/trening/sesja/${x.id}`} className={cx("mt-1 block rounded-md py-1 font-semibold", x.status === "completed" ? "bg-ok/20 text-ok" : x.status === "skipped" ? "bg-warn/15 text-warn" : "bg-olive-dim text-olive-strong")}>
-                    {x.template}
-                  </Link>
-                ))}
-              </div>
-            );
-          })}
-        </div>
-        <p className="mt-3 text-sm text-muted">Dni aktywne w tym tygodniu (trening lub ≥ 7000 kroków): {activeDays}</p>
+      <Card eyebrow={`Tydzień · ${activeDays} ${activeDays === 1 ? "dzień aktywny" : "dni aktywnych"}`} title="Kalendarz treningów">
+        <WeekStrip sessions={sessions} weekStart={wk} todayDate={todayDate} />
+        <p className="mt-3 text-xs text-muted">Dzień aktywny = ukończony trening lub co najmniej 7000 kroków.</p>
       </Card>
       <div className="grid gap-4 lg:grid-cols-2">
         <Card title="Masa ciała" subtitle="Pomiary i trend (średnia wykładnicza) — 4 tygodnie">
@@ -314,7 +306,7 @@ function WeekView() {
             ariaLabel="Wykres spożycia białka"
             unit="g"
             data={days.map((d) => ({ date: d.date, bialko: d.entries ? d.protein_g : null }))}
-            series={[{ key: "bialko", name: "Białko", color: COLORS.blue, type: "bar" }]}
+            series={[{ key: "bialko", name: "Białko", color: COLORS.sand, type: "bar" }]}
             reference={getTarget(data, todayDate) ? { y: getTarget(data, todayDate)!.protein_g, label: "cel" } : undefined}
           />
         </Card>
@@ -338,7 +330,7 @@ function WeekView() {
             data={strength.map((p) => ({ date: p.date, ciezar: p.top_weight, e1rm: p.e1rm }))}
             series={[
               { key: "ciezar", name: "Ciężar roboczy", color: COLORS.olive, dot: true },
-              { key: "e1rm", name: "Szac. 1RM", color: COLORS.blue, dashed: true },
+              { key: "e1rm", name: "Szac. 1RM", color: COLORS.sand, dashed: true },
             ]}
           />
         </Card>
@@ -403,7 +395,15 @@ function MonthView() {
       </Card>
       <div className="grid gap-4 lg:grid-cols-2">
         <Card title="Masa ciała i obwód pasa (średnie tygodniowe)">
-          <SimpleBars ariaLabel="Masa i pas tygodniowo" xKey="label" data={cmp.weeks} bars={[{ key: "waga", name: "Masa (kg)", color: COLORS.olive }, { key: "pas", name: "Pas (cm)", color: COLORS.blue }]} />
+          <SimpleBars
+            ariaLabel="Masa i pas tygodniowo"
+            xKey="label"
+            data={cmp.weeks}
+            bars={[
+              { key: "waga", name: "Masa (kg)", color: COLORS.olive, type: "line", dot: true },
+              { key: "pas", name: "Pas (cm)", color: COLORS.sand, type: "line", dot: true },
+            ]}
+          />
         </Card>
         <Card title="Objętość treningowa (kg × powt.)">
           <SimpleBars ariaLabel="Objętość treningowa tygodniowo" xKey="label" data={cmp.weeks} bars={[{ key: "objetosc", name: "Objętość", color: COLORS.olive }]} />

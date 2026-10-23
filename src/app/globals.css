@@ -29,6 +29,8 @@
   --equip: #a6b84c;
   --equip-2: #565e52;
   --topo: rgb(166 184 76 / 0.055);
+  --chart-sand: #d6c08a;
+  --chart-steel: #8fb3ad;
   color-scheme: dark;
 }
 
@@ -54,6 +56,8 @@
   --equip: #5d6c1c;
   --equip-2: #9aa08f;
   --topo: rgb(93 108 28 / 0.07);
+  --chart-sand: #8a6d2a;
+  --chart-steel: #3f6f68;
   color-scheme: light;
 }
 

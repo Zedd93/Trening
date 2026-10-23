@@ -98,7 +98,7 @@ function Measurements() {
             ariaLabel="Obwód pasa w czasie"
             unit="cm"
             data={[...list].reverse().filter((m) => m.waist_cm !== null).map((m) => ({ date: m.date, pas: m.waist_cm }))}
-            series={[{ key: "pas", name: "Pas", color: COLORS.blue, dot: true }]}
+            series={[{ key: "pas", name: "Pas", color: COLORS.sand, dot: true }]}
           />
         </Card>
         <Card title="Samopoczucie (ostatnie 4 tygodnie)" className="lg:col-span-2">
@@ -109,7 +109,7 @@ function Measurements() {
             series={[
               { key: "zmeczenie", name: "Zmęczenie", color: COLORS.warn, dot: true },
               { key: "sen", name: "Sen", color: COLORS.ok, dot: true },
-              { key: "bolesnosc", name: "Bolesność", color: COLORS.violet, dashed: true },
+              { key: "bolesnosc", name: "Bolesność", color: COLORS.steel, dashed: true },
             ]}
           />
         </Card>

@@ -44,14 +44,14 @@ export default function ProfilePage() {
 
   return (
     <>
-      <PageHeader title="Profil" subtitle={user ? `${user.email} · ${user.mode === "local" ? "tryb lokalny (to urządzenie)" : "konto Supabase"}` : undefined} />
+      <PageHeader eyebrow="// Operator" title="Profil" subtitle={user ? `${user.email} · ${user.mode === "local" ? "tryb lokalny (to urządzenie)" : "konto Supabase"}` : undefined} />
       {msg && (
         <div className="mb-4">
           <Notice tone="ok">{msg}</Notice>
         </div>
       )}
       <div className="flex flex-col gap-4">
-        <Card title="Dane podstawowe">
+        <Card eyebrow="01 · Trening" title="Dane podstawowe" className="[&>*:not(header)+*]:mt-5">
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <Input label="Imię" value={profile.display_name} onChange={(e) => updateProfile({ display_name: e.target.value })} />
             <NumberInput label="Rok urodzenia" value={profile.birth_year} onChange={(v) => v && updateProfile({ birth_year: v })} />
@@ -97,10 +97,10 @@ export default function ProfilePage() {
           </Field>
           <Toggle checked={profile.has_contraindications} onChange={(v) => updateProfile({ has_contraindications: v })} label="Przeciwwskazania do intensywnego wysiłku" />
           {profile.has_contraindications && <Textarea aria-label="Opis przeciwwskazań" value={profile.contraindications_note} onChange={(e) => updateProfile({ contraindications_note: e.target.value })} />}
-          <p className="mt-2 text-xs text-muted">Zmiany sprzętu, urazów, dni i czasu treningu zostaną uwzględnione przy generowaniu kolejnego cyklu (Trening → Generuj kolejny miesiąc). Ćwiczenia w bieżącym cyklu możesz zamienić ręcznie.</p>
+          <p className="text-xs text-muted">Zmiany sprzętu, urazów, dni i czasu treningu zostaną uwzględnione przy generowaniu kolejnego cyklu (Trening → Generuj kolejny miesiąc). Ćwiczenia w bieżącym cyklu możesz zamienić ręcznie.</p>
         </Card>
 
-        <Card title="Cele">
+        <Card eyebrow="02 · Kierunek" title="Cele" className="[&>*:not(header)+*]:mt-5">
           <Chips<GoalType>
             multiple
             value={goals.goals}
@@ -128,7 +128,7 @@ export default function ProfilePage() {
           </Button>
         </Card>
 
-        <Card title="Preferencje żywieniowe">
+        <Card eyebrow="03 · Żywienie" title="Preferencje żywieniowe" className="[&>*:not(header)+*]:mt-5">
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             <Select label="Posiłki dziennie" value={prefs.meals_per_day} onChange={(e) => updatePrefs({ meals_per_day: Number(e.target.value), meal_names: defaultMealNames(Number(e.target.value)) })}>
               {[2, 3, 4, 5, 6].map((n) => (
@@ -179,7 +179,7 @@ export default function ProfilePage() {
           <Toggle checked={prefs.batch_cooking} onChange={(v) => updatePrefs({ batch_cooking: v })} label="Gotowanie na kilka dni" />
         </Card>
 
-        <Card title="Wygląd">
+        <Card eyebrow="04 · Aplikacja" title="Wygląd">
           <Toggle
             checked={theme === "light"}
             onChange={(v) => {
@@ -192,7 +192,7 @@ export default function ProfilePage() {
           />
         </Card>
 
-        <Card title="Powiadomienia" subtitle="Opcjonalne — wymagają Twojej zgody w przeglądarce">
+        <Card eyebrow="05 · Aplikacja" title="Powiadomienia" subtitle="Opcjonalne — wymagają Twojej zgody w przeglądarce">
           {!notificationsSupported() ? (
             <Notice>Ta przeglądarka nie obsługuje powiadomień. Na iPhonie dodaj aplikację do ekranu początkowego (iOS 16.4+).</Notice>
           ) : (
@@ -239,7 +239,7 @@ export default function ProfilePage() {
           )}
         </Card>
 
-        <Card title="Asystent">
+        <Card eyebrow="06 · Aplikacja" title="Asystent">
           <Toggle
             checked={prefs.ai_assistant_consent}
             onChange={(v) => updatePrefs({ ai_assistant_consent: v })}
@@ -251,7 +251,7 @@ export default function ProfilePage() {
           </Link>
         </Card>
 
-        <Card title="Eksport i kopia danych" subtitle="Prawo dostępu i przenoszenia danych (RODO)">
+        <Card eyebrow="07 · Dane" title="Eksport i kopia danych" subtitle="Prawo dostępu i przenoszenia danych (RODO)">
           <div className="flex flex-wrap gap-2">
             <Button variant="outline" onClick={() => exportJSON(data)}>
               Pełna kopia (JSON)
@@ -291,7 +291,7 @@ export default function ProfilePage() {
           <p className="mt-2 text-xs text-muted">Jadłospis i listę zakupów wyeksportujesz w zakładkach Dieta → Jadłospis / Lista zakupów.</p>
         </Card>
 
-        <Card title="Prywatność i bezpieczeństwo">
+        <Card eyebrow="08 · Dane" title="Prywatność i bezpieczeństwo">
           <ul className="list-disc space-y-1 pl-5 text-sm text-muted">
             <li>{auth.mode === "local" ? "Dane przechowywane są wyłącznie w tej przeglądarce (IndexedDB). Hasło zapisane jako skrót PBKDF2-SHA256 (210 000 iteracji)." : "Dane przechowywane są w Supabase (PostgreSQL) z Row Level Security — dostęp wyłącznie do własnych rekordów."}</li>
             <li>Aplikacja nie używa zewnętrznych narzędzi analitycznych ani reklamowych.</li>
