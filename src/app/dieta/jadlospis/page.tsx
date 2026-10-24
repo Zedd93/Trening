@@ -12,6 +12,7 @@ import { activeMealPlan, generateMealPlan, logPlanEntry, plannerPrefs, replaceIn
 import { ingredientSwaps, mealSwaps } from "@/lib/nutrition/planner";
 import { slotLayout } from "@/lib/nutrition/meals";
 import { getTarget } from "@/lib/selectors";
+import { flushWrites } from "@/lib/data/store";
 import { formatDateShort, WEEKDAYS_SHORT, weekdayIndex } from "@/lib/utils/dates";
 import { fmt, sum } from "@/lib/utils/format";
 import { toCSV, downloadText } from "@/lib/utils/csv";
@@ -36,12 +37,14 @@ export default function MealPlanPage() {
   const target = getTarget(data, day);
   const dayTarget = target ? (target.calorie_mode === "cycling" && dayEntries[0] ? target.day_targets[dayEntries[0].day_type] : target) : null;
 
-  function generate() {
+  async function generate() {
     setErr(null);
     try {
       const r = generateMealPlan(start, Number(range));
-      setResult({ warnings: r.warnings, excluded: r.excluded_templates.length });
       setDay(start);
+      // Potwierdzenie dopiero po zapisaniu planu na urządzeniu.
+      await flushWrites();
+      setResult({ warnings: r.warnings, excluded: r.excluded_templates.length });
     } catch (e) {
       setErr((e as Error).message);
     }

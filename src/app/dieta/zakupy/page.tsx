@@ -125,14 +125,14 @@ export default function ShoppingPage() {
 
           {groups.map(([cat, list]) => (
             <div key={cat} className="mb-4">
-              <h3 className="mb-1 text-sm font-semibold text-olive-strong">{cat}</h3>
+              <h3 className="eyebrow mb-1 flex items-center gap-2 text-olive-strong">{cat}<span className="h-px flex-1 bg-line" /></h3>
               <ul className="flex flex-col divide-y divide-line">
                 {list.map((i) => (
-                  <li key={i.id} className="flex items-center gap-3 py-2">
+                  <li key={i.id} className="flex items-center gap-3 py-2.5">
                     <input type="checkbox" className="h-5 w-5 accent-[var(--olive)]" checked={i.checked} onChange={(e) => updateShoppingItem(i.id, { checked: e.target.checked })} aria-label={`Kupione: ${i.name}`} />
                     <span className={cx("min-w-0 flex-1", i.checked && "text-muted line-through")}>{i.name}</span>
-                    <span className="text-sm tabular-nums text-muted">{formatQuantity(i.quantity, i.unit)}</span>
-                    <button className="rounded-lg px-2 py-1 text-xs text-muted hover:bg-surface-2" onClick={() => updateShoppingItem(i.id, { in_pantry: true })}>
+                    <span className="font-data shrink-0 text-sm text-muted">{formatQuantity(i.quantity, i.unit)}</span>
+                    <button className="shrink-0 rounded-lg px-2 py-1 text-xs text-muted hover:bg-surface-2" onClick={() => updateShoppingItem(i.id, { in_pantry: true })}>
                       Mam w domu
                     </button>
                     <button className="grid h-8 w-8 place-items-center rounded-lg text-muted hover:text-bad" onClick={() => deleteShoppingItem(i.id)} aria-label={`Usuń: ${i.name}`}>

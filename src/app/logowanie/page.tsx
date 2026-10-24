@@ -35,16 +35,34 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-dvh items-center justify-center px-4 py-10">
-      <div className="w-full max-w-md">
-        <div className="mb-8 flex items-center gap-3">
+    <div className="mx-auto grid min-h-dvh w-full max-w-6xl items-center gap-8 px-4 py-8 sm:px-6 md:grid-cols-[1.15fr_1fr] md:gap-14 md:px-10">
+      <section className="stagger flex flex-col">
+        <div className="flex items-center gap-3">
           <IconLogo width={40} height={40} />
-          <div>
-            <h1 className="text-xl font-bold tracking-wide">SEAL PERFORMANCE</h1>
-            <p className="text-sm text-muted">Siła · kondycja · żywienie</p>
-          </div>
+          <span className="eyebrow text-olive-strong">// Odprawa · dostęp operatora</span>
         </div>
-        <div className="rounded-2xl border border-line bg-surface p-5">
+        <h1 className="font-display mt-6 text-[64px] font-extrabold uppercase leading-[0.82] tracking-wide sm:text-[96px] md:text-[68px] lg:text-[96px] xl:text-[112px]">
+          Seal
+          <span className="block text-olive-strong">Performance</span>
+        </h1>
+        <p className="mt-5 max-w-md text-base text-muted sm:text-lg">Siła, kondycja i żywienie w jednym planie — <span className="whitespace-nowrap">4-tygodniowy</span> program Full Body z progresją i dietą dopasowaną do celu.</p>
+        <ul className="mt-6 hidden gap-3 sm:grid sm:grid-cols-3">
+          {[
+            ["01", "Trening A/B/C", "12 sesji z animacją każdego ćwiczenia"],
+            ["02", "Progresja", "ciężary z Twoich serii i RIR"],
+            ["03", "Paliwo", "kalorie, makro, jadłospis, zakupy"],
+          ].map(([n, t, d]) => (
+            <li key={n} className="border-l border-line pl-3">
+              <div className="font-data text-xs text-olive-strong">{n}</div>
+              <div className="font-display mt-1 text-lg font-bold uppercase tracking-wide">{t}</div>
+              <div className="text-xs text-muted">{d}</div>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <div className="fade-in w-full">
+        <div className="hud hud-accent rounded-2xl p-5 sm:p-6">
           <Segmented
             ariaLabel="Tryb"
             value={mode}
@@ -87,12 +105,13 @@ export default function LoginPage() {
             </Button>
           </form>
         </div>
-        <p className="mt-4 text-xs leading-relaxed text-muted">
+        <p className="mt-4 flex gap-2 text-xs leading-relaxed text-muted">
+          <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-olive" aria-hidden />
           {auth.mode === "local"
-            ? "Tryb lokalny: konto i dane są zapisywane wyłącznie na tym urządzeniu (IndexedDB), hasło przechowywane jako skrót PBKDF2. Synchronizację między urządzeniami włączysz konfigurując Supabase (README)."
+            ? "Tryb lokalny: konto i dane są zapisywane wyłącznie na tym urządzeniu (IndexedDB), hasło jako skrót PBKDF2. Synchronizację między urządzeniami włączysz konfigurując Supabase (README)."
             : "Dane są przechowywane w bazie Supabase z kontrolą dostępu (Row Level Security) — tylko Ty masz do nich dostęp."}
         </p>
-        <p className="mt-2 text-xs text-muted">Aplikacja inspirowana przygotowaniem fizycznym jednostek specjalnych. Nie jest oficjalnym programem Navy SEALs ani produktem U.S. Navy.</p>
+        <p className="mt-2 text-[11px] text-muted/80">Aplikacja inspirowana przygotowaniem fizycznym jednostek specjalnych. Nie jest oficjalnym programem Navy SEALs ani produktem U.S. Navy.</p>
       </div>
     </div>
   );

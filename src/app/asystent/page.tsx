@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useData, usePrefs, useToday } from "@/lib/hooks";
-import { Badge, Button, Input, Notice, PageHeader, Segmented, cx } from "@/components/ui";
+import { Button, Input, Notice, PageHeader, Segmented, cx } from "@/components/ui";
 import { answer, contextSummary, detectIntent, INTENTS, type Answer } from "@/lib/assistant/dataAssistant";
 import { getSupabase } from "@/lib/data/auth";
 
@@ -65,6 +65,7 @@ export default function AssistantPage() {
   }
 
   const aiReady = ai?.enabled && prefs?.ai_assistant_consent;
+  const ask = (text: string) => (mode === "ai" && aiReady ? void askAI(text) : askData(text));
 
   return (
     <>
@@ -84,7 +85,10 @@ export default function AssistantPage() {
         }
       />
       {mode === "data" ? (
-        <Notice>Tryb danych: odpowiedzi są wyliczane regułami bezpośrednio z Twoich zapisów (treningi, dziennik, pomiary). To nie jest model językowy — działa offline i nic nie wysyła.</Notice>
+        <p className="flex items-start gap-2 text-xs text-muted">
+          <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-olive" aria-hidden />
+          Tryb danych: odpowiedzi są wyliczane regułami bezpośrednio z Twoich zapisów (treningi, dziennik, pomiary). To nie jest model językowy — działa offline i nic nie wysyła.
+        </p>
       ) : !ai?.enabled ? (
         <Notice tone="warn" title="Moduł AI nie jest skonfigurowany">
           Aby go włączyć, administrator wdrożenia ustawia po stronie serwera zmienną <code>ANTHROPIC_API_KEY</code> (oraz Supabase lub <code>ASSISTANT_ALLOW_LOCAL=true</code>) — instrukcja w README. Do tego czasu korzystaj z asystenta danych.
@@ -103,14 +107,34 @@ export default function AssistantPage() {
         </Notice>
       )}
 
-      <div className="mt-4 flex min-h-[40vh] flex-col gap-3" aria-live="polite">
+      <div className="mt-5 flex min-h-[40vh] flex-col gap-3" aria-live="polite">
+        {msgs.length === 0 && (
+          <section className="fade-in">
+            <div className="eyebrow mb-3">Od czego zacząć</div>
+            <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+              {INTENTS.map((i, k) => (
+                <li key={i.id}>
+                  <button
+                    className="hud group flex h-full w-full items-start gap-3 rounded-xl p-3 text-left text-sm transition-colors hover:border-olive"
+                    onClick={() => ask(i.label)}
+                  >
+                    <span className="font-data mt-0.5 text-xs text-olive-strong">{String(k + 1).padStart(2, "0")}</span>
+                    <span className="flex-1">{i.label}</span>
+                    <span aria-hidden className="text-muted transition-transform group-hover:translate-x-0.5 group-hover:text-olive-strong">
+                      →
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
         {msgs.map((m, i) => (
-          <div key={i} className={cx("max-w-[92%] rounded-2xl p-3 text-sm", m.role === "user" ? "self-end bg-olive-dim text-fg" : "self-start border border-line bg-surface")}>
-            {m.source && m.role === "assistant" && (
-              <div className="mb-1">
-                <Badge tone={m.source === "ai" ? "olive" : "neutral"}>{m.source === "ai" ? "odpowiedź AI" : "analiza danych"}</Badge>
-              </div>
-            )}
+          <div
+            key={i}
+            className={cx("fade-in max-w-[92%] rounded-2xl p-3 text-sm sm:max-w-[75%]", m.role === "user" ? "self-end rounded-br-md bg-olive-dim text-fg" : "hud self-start rounded-bl-md")}
+          >
+            {m.source && m.role === "assistant" && <div className={cx("eyebrow mb-1.5", m.source === "ai" && "text-olive-strong")}>{m.source === "ai" ? "// odpowiedź AI" : "// analiza danych"}</div>}
             {m.text && <p className="whitespace-pre-wrap">{m.text}</p>}
             {m.answer && (
               <>
@@ -137,14 +161,18 @@ export default function AssistantPage() {
         <div ref={end} />
       </div>
 
-      <div className="sticky bottom-20 mt-4 rounded-2xl border border-line bg-bg/95 p-3 backdrop-blur md:bottom-4">
-        <div className="mb-2 flex flex-wrap gap-1.5">
-          {INTENTS.map((i) => (
-            <button key={i.id} className="rounded-full border border-line bg-surface-2 px-3 py-1.5 text-xs hover:border-olive" onClick={() => (mode === "ai" && aiReady ? askAI(i.label) : askData(i.label))}>
-              {i.label}
-            </button>
-          ))}
-        </div>
+      <div className="sticky bottom-24 mt-4 rounded-2xl border border-line-strong bg-bg/95 p-2.5 backdrop-blur md:bottom-4">
+        {msgs.length > 0 && (
+          <div className="scrollbar-none -mx-2.5 mb-2 overflow-x-auto px-2.5">
+            <div className="flex min-w-max gap-1.5">
+              {INTENTS.map((i) => (
+                <button key={i.id} className="rounded-md border border-line bg-surface-2 px-2.5 py-1.5 text-xs text-muted transition-colors hover:border-olive hover:text-fg" onClick={() => ask(i.label)}>
+                  {i.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
         <form
           className="flex gap-2"
           onSubmit={(e) => {
@@ -152,8 +180,7 @@ export default function AssistantPage() {
             const text = q.trim();
             if (!text) return;
             setQ("");
-            if (mode === "ai" && aiReady) void askAI(text);
-            else askData(text);
+            ask(text);
           }}
         >
           <Input aria-label="Pytanie do asystenta" placeholder="Zadaj pytanie…" value={q} onChange={(e) => setQ(e.target.value)} maxLength={1000} />

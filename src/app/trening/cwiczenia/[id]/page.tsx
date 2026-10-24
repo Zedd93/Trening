@@ -41,24 +41,24 @@ export default function ExerciseDetail() {
         <Card title="Opis">
           <dl className="grid gap-3 text-sm sm:grid-cols-2">
             <div>
-              <dt className="text-muted">Mięśnie główne</dt>
+              <dt className="eyebrow mb-0.5">Mięśnie główne</dt>
               <dd>{def.muscles_primary.join(", ")}</dd>
             </div>
             <div>
-              <dt className="text-muted">Mięśnie pomocnicze</dt>
+              <dt className="eyebrow mb-0.5">Mięśnie pomocnicze</dt>
               <dd>{def.muscles_secondary.join(", ") || "—"}</dd>
             </div>
             <div>
-              <dt className="text-muted">Sprzęt</dt>
+              <dt className="eyebrow mb-0.5">Sprzęt</dt>
               <dd>{def.equipment.map((e) => EQUIPMENT_LABELS[e]).join(", ") || "Masa ciała"}</dd>
             </div>
             <div>
-              <dt className="text-muted">Tempo</dt>
+              <dt className="eyebrow mb-0.5">Tempo</dt>
               <dd>{def.tempo}</dd>
             </div>
             {def.avoid_with.length > 0 && (
               <div className="sm:col-span-2">
-                <dt className="text-muted">Pomijane przy dolegliwościach</dt>
+                <dt className="eyebrow mb-0.5">Pomijane przy dolegliwościach</dt>
                 <dd className="flex flex-wrap gap-1">
                   {def.avoid_with.map((a) => (
                     <Badge key={a} tone="warn">
@@ -107,7 +107,7 @@ export default function ExerciseDetail() {
             unit="kg"
             series={[
               { key: "top", name: "Najwyższy ciężar", color: COLORS.olive, dot: true },
-              { key: "e1rm", name: "Szacowane 1RM", color: COLORS.blue, dashed: true },
+              { key: "e1rm", name: "Szacowane 1RM", color: COLORS.sand, dashed: true },
             ]}
           />
         )}

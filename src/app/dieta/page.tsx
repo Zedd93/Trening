@@ -7,7 +7,7 @@ import { useData, usePrefs, useProducts, useToday } from "@/lib/hooks";
 import { DietNav } from "@/components/nutrition/DietNav";
 import { AmountEditor, MacroLine, ProductPicker } from "@/components/nutrition/ProductPicker";
 import { Hydration } from "@/components/nutrition/Hydration";
-import { Badge, Button, Card, Empty, Input, Modal, Notice, PageHeader, Progress, Select } from "@/components/ui";
+import { Badge, Button, Card, Empty, Gauge, Input, Modal, Notice, PageHeader, Progress, Select, cx } from "@/components/ui";
 import { IconChevron, IconChevronLeft, IconPlus, IconSwap, IconTrash } from "@/components/icons";
 import { addDays, formatDateLong, type ISODate } from "@/lib/utils/dates";
 import { fmt, sum } from "@/lib/utils/format";
@@ -92,26 +92,29 @@ function DiaryInner() {
       </div>
 
       {dayTarget ? (
-        <Card>
-          <div className="grid grid-cols-3 gap-3 text-center">
-            <div>
-              <div className="text-xs uppercase tracking-wide text-muted">Spożyte</div>
-              <div className="text-2xl font-bold tabular-nums">{fmt(totals.kcal)}</div>
+        <Card eyebrow="Bilans dnia" className="hud-accent">
+          <div className="grid items-center gap-5 sm:grid-cols-[auto_1fr]">
+            <div className="flex items-center gap-4 sm:flex-col sm:gap-2">
+              <Gauge value={totals.kcal} max={dayTarget.kcal} label="Kalorie" unit="kcal" size={140} />
+              <div className="flex flex-1 flex-col gap-2 sm:w-full sm:flex-row sm:justify-between sm:gap-4">
+                <div>
+                  <div className="eyebrow">Cel</div>
+                  <div className="font-data text-lg font-semibold">{fmt(dayTarget.kcal)}</div>
+                </div>
+                <div>
+                  <div className="eyebrow">Pozostało</div>
+                  <div className={cx("font-data text-lg font-semibold", dayTarget.kcal - totals.kcal < 0 ? "text-warn" : "text-ok")}>{fmt(dayTarget.kcal - totals.kcal)}</div>
+                </div>
+              </div>
             </div>
             <div>
-              <div className="text-xs uppercase tracking-wide text-muted">Cel</div>
-              <div className="text-2xl font-bold tabular-nums">{fmt(dayTarget.kcal)}</div>
-            </div>
-            <div>
-              <div className="text-xs uppercase tracking-wide text-muted">Pozostało</div>
-              <div className={`text-2xl font-bold tabular-nums ${dayTarget.kcal - totals.kcal < 0 ? "text-warn" : "text-ok"}`}>{fmt(dayTarget.kcal - totals.kcal)}</div>
-            </div>
-          </div>
-          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              <div className="grid gap-3">
             <Progress label="Białko" value={totals.p} max={dayTarget.protein_g} showValues={`${fmt(totals.p)} / ${dayTarget.protein_g} g`} />
             <Progress label="Tłuszcz" value={totals.f} max={dayTarget.fat_g} showValues={`${fmt(totals.f)} / ${dayTarget.fat_g} g`} />
             <Progress label="Węglowodany" value={totals.c} max={dayTarget.carbs_g} showValues={`${fmt(totals.c)} / ${dayTarget.carbs_g} g`} />
             <Progress label="Błonnik" value={totals.fib} max={dayTarget.fiber_g} showValues={`${fmt(totals.fib)} / ${dayTarget.fiber_g} g`} />
+              </div>
+            </div>
           </div>
           <p className="mt-3 text-xs text-muted">Kalorie z treningu nie są doliczane — aktywność jest już uwzględniona w celu (TDEE).</p>
         </Card>

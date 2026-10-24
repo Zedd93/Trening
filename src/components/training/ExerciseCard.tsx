@@ -35,6 +35,8 @@ export function ExerciseCard({
   pendingRec,
   history,
   editable,
+  index = 1,
+  current = false,
 }: {
   we: WorkoutExercise;
   session: WorkoutSession;
@@ -42,11 +44,14 @@ export function ExerciseCard({
   pendingRec?: ProgressionRecommendation;
   history: { date: string; sets: ExerciseSet[] }[];
   editable: boolean;
+  index?: number;
+  current?: boolean;
 }) {
   const def = EXERCISE_MAP[we.exercise_id];
   const profile = useProfile();
   const data = useData();
   const [open, setOpen] = useState(false);
+  const [expanded, setExpanded] = useState(false);
   const [swapOpen, setSwapOpen] = useState(false);
   const [bigAnim, setBigAnim] = useState(false);
   const [needReps, setNeedReps] = useState<number | null>(null);
@@ -79,43 +84,86 @@ export function ExerciseCard({
     if (nowDone && we.rest_sec > 0 && session.status === "in_progress") startRest(session.id, we.rest_sec);
   }
 
+  const complete = we.sets > 0 && doneCount >= (isCardio ? 1 : we.sets);
+  const collapsed = complete && !expanded;
+  const restLabel = we.rest_sec >= 60 ? `${fmt(we.rest_sec / 60, 1)} min` : `${we.rest_sec} s`;
+  const loadText =
+    we.suggested_load_kg !== null
+      ? `${fmt(we.suggested_load_kg, 2)} kg${def.load_type === "dumbbell" ? " / hantla" : ""}`
+      : session.week === 1
+        ? "dobierz z zapasem RIR"
+        : lastWeight
+          ? `ostatnio ${fmt(lastWeight, 2)} kg`
+          : "—";
+
   return (
-    <article className={cx("rounded-2xl border bg-surface p-4", doneCount >= we.sets && we.sets > 0 ? "border-ok/40" : "border-line")} aria-labelledby={`ex-${we.id}`}>
+    <article
+      className={cx("hud rounded-2xl p-4 transition-colors", current && "hud-accent shadow-[0_0_0_1px_var(--olive),0_0_40px_-18px_var(--olive)]", complete && "opacity-90")}
+      aria-labelledby={`ex-${we.id}`}
+    >
       <div className="flex gap-3">
-        <button type="button" onClick={() => setBigAnim(true)} className="shrink-0 rounded-xl" aria-label={`Powiększ demonstrację: ${def.name}`}>
-          <ExerciseAnimation exerciseId={def.id} size="sm" />
+        <button type="button" onClick={() => setBigAnim(true)} className={cx("relative shrink-0 rounded-xl", collapsed && "hidden sm:block")} aria-label={`Powiększ demonstrację: ${def.name}`}>
+          <ExerciseAnimation exerciseId={def.id} size="sm" autoPlay={current || !complete} />
+          <span className="absolute bottom-1 right-1 rounded bg-bg/80 px-1 font-mono text-[9px] uppercase tracking-wider text-muted">⤢</span>
         </button>
         <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <h3 id={`ex-${we.id}`} className="text-[15px] font-semibold leading-tight">
-              {def.name}
-            </h3>
-            {def.unilateral && <Badge>na stronę</Badge>}
+          <div className="flex items-start gap-2">
+            <span className={cx("font-data mt-0.5 text-sm font-semibold", current ? "text-olive-strong" : "text-muted")}>{String(index).padStart(2, "0")}</span>
+            <div className="min-w-0 flex-1">
+              <h3 id={`ex-${we.id}`} className="font-display text-[22px] font-bold uppercase leading-[0.95] tracking-wide">
+                {def.name}
+              </h3>
+              {origName && <p className="mt-0.5 text-xs text-muted">zamiast: {origName}</p>}
+            </div>
+            {complete ? (
+              <Badge tone="ok">✓ gotowe</Badge>
+            ) : current ? (
+              <Badge tone="olive">teraz</Badge>
+            ) : null}
           </div>
-          {origName && <p className="text-xs text-muted">zamiast: {origName}</p>}
-          <p className="mt-1 text-xs text-muted">{def.muscles_primary.join(", ")}</p>
-          <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-sm">
-            <span className="font-medium">{prescription(we, def)}</span>
-            {!isCardio && <span className="text-muted">RIR {we.target_rir}</span>}
-            {!isCardio && we.tempo && <span className="text-muted">tempo {we.tempo}</span>}
-            {we.rest_sec > 0 && <span className="text-muted">przerwa {we.rest_sec >= 60 ? `${fmt(we.rest_sec / 60, 1)} min` : `${we.rest_sec} s`}</span>}
-          </div>
-          {loadable && (
-            <p className="mt-1 text-sm">
-              Zalecany ciężar:{" "}
-              <strong>{we.suggested_load_kg !== null ? `${fmt(we.suggested_load_kg, 2)} kg${def.load_type === "dumbbell" ? " / hantla" : ""}` : session.week === 1 ? "dobierz z zapasem RIR (tydzień 1)" : lastWeight ? `ostatnio ${fmt(lastWeight, 2)} kg` : "—"}</strong>
-            </p>
+          {!collapsed && (
+            <>
+              <p className="mt-1.5 text-xs text-muted">{def.muscles_primary.join(" · ")}</p>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                <span className="rounded-md bg-olive/15 px-2 py-1 font-mono text-[12px] font-semibold text-olive-strong">{isCardio ? "kondycja" : prescription(we, def)}</span>
+                {!isCardio && <span className="rounded-md bg-surface-3 px-2 py-1 font-mono text-[12px]">RIR {we.target_rir}</span>}
+                {!isCardio && we.tempo && <span className="rounded-md bg-surface-3 px-2 py-1 font-mono text-[12px]">tempo {we.tempo}</span>}
+                {we.rest_sec > 0 && <span className="rounded-md bg-surface-3 px-2 py-1 font-mono text-[12px]">⏱ {restLabel}</span>}
+                {def.unilateral && <span className="rounded-md bg-surface-3 px-2 py-1 font-mono text-[12px]">na stronę</span>}
+              </div>
+              {loadable && (
+                <p className="mt-2 text-sm">
+                  <span className="text-muted">Ciężar: </span>
+                  <strong className="font-data">{loadText}</strong>
+                </p>
+              )}
+            </>
           )}
-          {we.load_note && we.block !== "conditioning" && <p className="mt-1 text-xs text-muted">{we.load_note}</p>}
+          {collapsed && (
+            <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
+              <span className="font-data text-sm text-muted">
+                {sets
+                  .filter((x) => x.completed)
+                  .sort((a, b) => a.set_number - b.set_number)
+                  .map((x) => `${x.weight_kg ? fmt(x.weight_kg, 2) + "×" : ""}${x.reps ?? "✓"}`)
+                  .join("  ")}
+              </span>
+              <button className="text-sm text-olive-strong underline-offset-2 hover:underline" onClick={() => setExpanded(true)}>
+                Edytuj serie
+              </button>
+            </div>
+          )}
         </div>
       </div>
+      {!collapsed && we.load_note && we.block !== "conditioning" && <p className="mt-3 border-l-2 border-line-strong pl-3 text-xs text-muted">{we.load_note}</p>}
 
-      {targetPending && targetPending.target_session_id === session.id && (
+      {!collapsed && targetPending && targetPending.target_session_id === session.id && (
         <div className="mt-3 rounded-xl border border-olive/40 bg-olive-dim/40 p-3 text-sm">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <div>
-              <Badge tone="olive">{ACTION_LABELS[targetPending.action]}</Badge>{" "}
-              {targetPending.suggested_load_kg !== null && <strong>{fmt(targetPending.suggested_load_kg, 2)} kg</strong>} <span className="text-muted">· {targetPending.rep_target}</span>
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge tone="olive">{ACTION_LABELS[targetPending.action]}</Badge>
+              {targetPending.suggested_load_kg !== null && <strong className="font-data">{fmt(targetPending.suggested_load_kg, 2)} kg</strong>}
+              <span className="text-muted">{targetPending.rep_target}</span>
             </div>
             {editable && (
               <div className="flex gap-2">
@@ -136,43 +184,47 @@ export function ExerciseCard({
         </div>
       )}
 
-      {isCardio ? (
+      {collapsed ? null : isCardio ? (
         <>
-          <p className="mt-3 rounded-xl bg-surface-2 p-3 text-sm">{we.load_note}</p>
+          <p className="mt-3 rounded-xl border border-line bg-bg/50 p-3 font-mono text-[13px]">{we.load_note}</p>
           {we.sets > 1 && we.duration_sec > 0 && <IntervalTimer rounds={we.sets} work={we.duration_sec} rest={we.rest_sec} />}
           {editable && (
-            <label className="mt-3 flex items-center gap-3 text-sm">
-              <input type="checkbox" className="h-5 w-5 accent-[var(--olive)]" checked={!!setRow(1)?.completed} onChange={() => toggleDone(1)} />
-              Blok kondycyjny wykonany
-            </label>
+            <button
+              type="button"
+              onClick={() => toggleDone(1)}
+              aria-pressed={!!setRow(1)?.completed}
+              className={cx("mt-3 flex h-12 w-full items-center justify-center gap-2 rounded-xl border font-semibold", setRow(1)?.completed ? "border-ok bg-ok/15 text-ok" : "border-line-strong text-fg hover:border-olive")}
+            >
+              <IconCheck width={18} height={18} /> Blok kondycyjny wykonany
+            </button>
           )}
         </>
       ) : (
         <div className="mt-4">
-          <div className="grid grid-cols-[2rem_1fr_1fr_4.5rem_3rem] items-center gap-2 px-1 text-[11px] uppercase tracking-wide text-muted">
-            <span>Seria</span>
-            <span>{loadable ? "Ciężar (kg)" : "Obciążenie"}</span>
-            <span>{u.reps}</span>
-            <span>RIR</span>
-            <span className="text-center">Wyk.</span>
+          <div className="hidden grid-cols-[1.75rem_1fr_1fr_auto] gap-2 px-1 sm:grid">
+            <span className="eyebrow">#</span>
+            <span className="eyebrow">{loadable ? "Ciężar · kg" : "Obciążenie"}</span>
+            <span className="eyebrow">{u.reps}</span>
+            <span className="eyebrow w-[17.5rem]">RIR · zapas powtórzeń / wykonano</span>
           </div>
-          <div className="mt-1 flex flex-col gap-2">
+          <ol className="mt-1 flex flex-col gap-2">
             {Array.from({ length: rowsCount }, (_, i) => i + 1).map((n) => {
               const s = setRow(n);
               const prev = setRow(n - 1);
+              const done = !!s?.completed;
               return (
-                <div key={n} className={cx("grid grid-cols-[2rem_1fr_1fr_4.5rem_3rem] items-center gap-2 rounded-xl p-1", s?.completed && "bg-ok/10")}>
-                  <span className="text-center text-sm font-semibold text-muted">{n}</span>
+                <li
+                  key={n}
+                  className={cx(
+                    "grid grid-cols-[1.75rem_minmax(0,1fr)_minmax(0,1fr)] items-center gap-2 rounded-xl border p-2 transition-colors sm:grid-cols-[1.75rem_minmax(0,1fr)_minmax(0,1fr)_auto]",
+                    done ? "border-ok/40 bg-ok/[0.07]" : "border-line bg-bg/40",
+                  )}
+                >
+                  <span className={cx("font-data text-center text-base font-semibold", done ? "text-ok" : "text-muted")}>{n}</span>
                   {loadable ? (
-                    <Stepper
-                      ariaLabel={`Seria ${n}: ciężar`}
-                      value={s?.weight_kg ?? null}
-                      step={step}
-                      decimals={2}
-                      onChange={(v) => editable && upsertSet(we, n, { weight_kg: v })}
-                    />
+                    <Stepper ariaLabel={`Seria ${n}: ciężar`} value={s?.weight_kg ?? null} step={step} decimals={2} onChange={(v) => editable && upsertSet(we, n, { weight_kg: v })} />
                   ) : (
-                    <span className="px-2 text-sm text-muted">masa ciała</span>
+                    <span className="px-1 font-mono text-xs uppercase text-muted">masa ciała</span>
                   )}
                   <Stepper
                     ariaLabel={`Seria ${n}: ${u.reps.toLowerCase()}`}
@@ -184,42 +236,53 @@ export function ExerciseCard({
                       upsertSet(we, n, { reps: v, weight_kg: s?.weight_kg ?? (loadable ? (prev?.weight_kg ?? defaultWeight) : null) });
                     }}
                   />
-                  <select
-                    aria-label={`Seria ${n}: RIR`}
-                    value={s?.rir ?? ""}
-                    disabled={!editable}
-                    onChange={(e) => upsertSet(we, n, { rir: e.target.value === "" ? null : Number(e.target.value) })}
-                    className="h-11 rounded-xl border border-line bg-surface-2 px-2 text-center"
-                  >
-                    <option value="">—</option>
-                    {[0, 1, 2, 3, 4, 5].map((r) => (
-                      <option key={r} value={r}>
-                        {r === 5 ? "5+" : r}
-                      </option>
-                    ))}
-                  </select>
-                  <button
-                    type="button"
-                    disabled={!editable}
-                    onClick={() => toggleDone(n)}
-                    aria-pressed={!!s?.completed}
-                    aria-label={`Seria ${n}: wykonano`}
-                    className={cx("grid h-11 w-11 place-items-center justify-self-center rounded-xl border", s?.completed ? "border-ok bg-ok text-[#08160d]" : "border-line bg-surface-2 text-muted")}
-                  >
-                    <IconCheck width={20} height={20} />
-                  </button>
+                  <div className="col-span-3 flex items-center gap-2 sm:col-span-1">
+                    <div role="radiogroup" aria-label={`Seria ${n}: RIR`} className="flex flex-1 gap-1 sm:flex-none">
+                      <span className="eyebrow self-center pr-0.5 sm:hidden">RIR</span>
+                      {[0, 1, 2, 3, 4, 5].map((r) => (
+                        <button
+                          key={r}
+                          type="button"
+                          role="radio"
+                          aria-checked={s?.rir === r}
+                          aria-label={`Seria ${n}: RIR ${r === 5 ? "5 lub więcej" : r}`}
+                          disabled={!editable}
+                          onClick={() => upsertSet(we, n, { rir: s?.rir === r ? null : r })}
+                          className={cx(
+                            "font-data h-10 min-w-0 flex-1 rounded-lg border text-sm sm:w-9 sm:flex-none",
+                            s?.rir === r ? "border-olive bg-olive text-[#0e1207] font-semibold" : "border-line bg-surface-2 text-muted hover:text-fg",
+                          )}
+                        >
+                          {r === 5 ? "5+" : r}
+                        </button>
+                      ))}
+                    </div>
+                    <button
+                      type="button"
+                      disabled={!editable}
+                      onClick={() => toggleDone(n)}
+                      aria-pressed={done}
+                      aria-label={`Seria ${n}: wykonano`}
+                      className={cx(
+                        "grid h-11 w-14 shrink-0 place-items-center rounded-xl border-2 transition-colors",
+                        done ? "pop border-ok bg-ok text-[#08160d]" : "border-line-strong bg-surface-2 text-muted hover:border-olive hover:text-olive-strong",
+                      )}
+                    >
+                      <IconCheck width={22} height={22} />
+                    </button>
+                  </div>
                   {needReps === n && (
-                    <p className="col-span-5 px-1 text-xs text-warn" role="alert">
+                    <p className="col-span-3 px-1 text-xs text-warn sm:col-span-4" role="alert">
                       Wpisz liczbę {def.load_type === "time" ? "sekund" : def.load_type === "distance" ? "metrów" : "powtórzeń"}, aby oznaczyć serię jako wykonaną.
                     </p>
                   )}
-                </div>
+                </li>
               );
             })}
-          </div>
+          </ol>
           {editable && (
-            <div className="mt-2 flex flex-wrap gap-2">
-              <Button size="sm" variant="ghost" onClick={() => upsertSet(we, rowsCount + 1, { weight_kg: setRow(rowsCount)?.weight_kg ?? (loadable ? defaultWeight : null), reps: setRow(rowsCount)?.reps ?? null })}>
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <Button size="sm" variant="outline" onClick={() => upsertSet(we, rowsCount + 1, { weight_kg: setRow(rowsCount)?.weight_kg ?? (loadable ? defaultWeight : null), reps: setRow(rowsCount)?.reps ?? null })}>
                 + seria
               </Button>
               {rowsCount > we.sets && (
@@ -228,11 +291,11 @@ export function ExerciseCard({
                 </Button>
               )}
               <div className="ml-auto flex items-center gap-1 text-sm" role="group" aria-label="Ocena techniki">
-                <span className="text-muted">Technika:</span>
-                <button className={cx("h-9 rounded-lg px-2.5", we.technique_ok === true ? "bg-ok/20 text-ok" : "bg-surface-2")} aria-pressed={we.technique_ok === true} onClick={() => setTechnique(we.id, we.technique_ok === true ? null : true)}>
+                <span className="eyebrow mr-1">Technika</span>
+                <button className={cx("h-9 rounded-lg border px-2.5", we.technique_ok === true ? "border-ok bg-ok/15 text-ok" : "border-line")} aria-pressed={we.technique_ok === true} onClick={() => setTechnique(we.id, we.technique_ok === true ? null : true)}>
                   OK
                 </button>
-                <button className={cx("h-9 rounded-lg px-2.5", we.technique_ok === false ? "bg-warn/20 text-warn" : "bg-surface-2")} aria-pressed={we.technique_ok === false} onClick={() => setTechnique(we.id, we.technique_ok === false ? null : false)}>
+                <button className={cx("h-9 rounded-lg border px-2.5", we.technique_ok === false ? "border-warn bg-warn/15 text-warn" : "border-line")} aria-pressed={we.technique_ok === false} onClick={() => setTechnique(we.id, we.technique_ok === false ? null : false)}>
                   do poprawy
                 </button>
               </div>
@@ -241,6 +304,7 @@ export function ExerciseCard({
         </div>
       )}
 
+      {!collapsed && (
       <div className="mt-3 flex flex-wrap gap-2 border-t border-line pt-3">
         <Button size="sm" variant="ghost" onClick={() => setOpen((o) => !o)} aria-expanded={open}>
           {open ? "Ukryj szczegóły" : "Technika i historia"}
@@ -254,6 +318,7 @@ export function ExerciseCard({
           Karta ćwiczenia →
         </Link>
       </div>
+      )}
 
       {open && (
         <div className="mt-3 grid gap-4 text-sm sm:grid-cols-2">

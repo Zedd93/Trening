@@ -16,7 +16,7 @@ import type {
   ShoppingListItem,
 } from "@/lib/domain/types";
 import { createRecord, createRecords, putRecords, removeRecords, snapshot, updateRecord } from "@/lib/data/store";
-import { addDays, today, type ISODate } from "@/lib/utils/dates";
+import { addDays, formatDateShort, today, type ISODate } from "@/lib/utils/dates";
 import { round } from "@/lib/utils/format";
 import { dayTargets, dayTypeCounts, energy, goalCalories, macros } from "@/lib/nutrition/calculator";
 import { macrosFor, toGrams } from "@/lib/nutrition/units";
@@ -382,7 +382,7 @@ export function createShoppingList(from: ISODate, to: ISODate) {
   const plan = activeMealPlan();
   const entries = Object.values(data.meal_plan_entries).filter((e) => (!plan || e.plan_id === plan.id) && e.date >= from && e.date <= to);
   const items = aggregateIngredients(entries, productIndex(data));
-  const list = createRecord("shopping_lists", { name: `Zakupy ${from} – ${to}`, plan_id: plan?.id ?? null, date_from: from, date_to: to });
+  const list = createRecord("shopping_lists", { name: `Zakupy ${formatDateShort(from)}–${formatDateShort(to)}`, plan_id: plan?.id ?? null, date_from: from, date_to: to });
   createRecords(
     "shopping_list_items",
     items.map((i): NewRecord<ShoppingListItem> => ({

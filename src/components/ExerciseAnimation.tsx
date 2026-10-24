@@ -338,9 +338,9 @@ export function ExerciseAnimation({
     );
   }
 
-  const h = size === "sm" ? "h-28 w-28" : size === "lg" ? "h-72 w-72 sm:h-80 sm:w-80" : "h-48 w-48";
+  const h = size === "sm" ? "h-28 w-28" : size === "lg" ? "aspect-square w-full sm:aspect-auto sm:h-80 sm:w-80" : "h-48 w-48";
   return (
-    <figure className={cx("relative shrink-0 select-none", className)} aria-label={`Animowana demonstracja: ${ex?.name ?? exerciseId}`}>
+    <figure className={cx("relative shrink-0 select-none", size === "lg" && "w-full max-w-[24rem] sm:w-auto", className)} aria-label={`Animowana demonstracja: ${ex?.name ?? exerciseId}`}>
       <div className={cx("overflow-hidden rounded-xl bg-surface-2", h)}>
         <AnimationScene anim={anim} phase={phase} />
       </div>
@@ -372,7 +372,7 @@ export function ExerciseAnimation({
         </div>
       )}
       {size !== "sm" && (
-        <figcaption className="absolute left-2 top-2 rounded-md bg-surface/80 px-1.5 py-0.5 text-[10px] text-muted">
+        <figcaption className="absolute left-2 top-2 rounded-md bg-surface/80 px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wider text-muted">
           {anim.view === "front" ? "widok z przodu" : "widok z boku"}
           {reduced && !playing ? " · ograniczony ruch" : ""}
         </figcaption>

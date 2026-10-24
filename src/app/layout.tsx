@@ -1,4 +1,7 @@
 import type { Metadata, Viewport } from "next";
+import "@fontsource-variable/big-shoulders-display";
+import "@fontsource-variable/instrument-sans";
+import "@fontsource-variable/jetbrains-mono";
 import "./globals.css";
 import { Providers } from "@/components/Providers";
 
@@ -16,7 +19,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0e100f",
+  themeColor: "#0a0c0b",
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",

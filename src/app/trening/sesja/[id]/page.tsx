@@ -62,17 +62,47 @@ export default function SessionPage() {
     setSummary(recs);
   }
 
+  const progressOf = (weId: string, setsPlanned: number, cardio: boolean) => {
+    const done = allSets.filter((x) => x.workout_exercise_id === weId && x.completed).length;
+    return Math.min(1, done / Math.max(1, cardio ? 1 : setsPlanned));
+  };
+  const currentId = session.status === "completed" ? null : exercises.find((e) => progressOf(e.id, e.sets, e.block === "conditioning") < 1)?.id ?? null;
+  const pct = totalSets ? Math.round((doneSets / totalSets) * 100) : 0;
+  let idx = 0;
+
+  const drill = (list: typeof session.warmup, title: string, eyebrow: string) => (
+    <details className="hud group rounded-2xl" open={session.status !== "completed"}>
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-4 [&::-webkit-details-marker]:hidden">
+        <div>
+          <div className="eyebrow">{eyebrow}</div>
+          <h2 className="font-display text-xl font-bold uppercase leading-none tracking-wide">{title}</h2>
+        </div>
+        <span className="font-mono text-xs text-muted transition-transform group-open:rotate-180">▾</span>
+      </summary>
+      <ul className="scrollbar-none -mt-1 flex snap-x gap-3 overflow-x-auto px-4 pb-4">
+        {list.map((w) => (
+          <li key={w.exercise_id} className="w-36 shrink-0 snap-start rounded-xl border border-line bg-bg/50 p-2">
+            <ExerciseAnimation exerciseId={w.exercise_id} size="sm" className="mx-auto" />
+            <div className="mt-2 text-[13px] font-semibold leading-tight">{EXERCISE_MAP[w.exercise_id]?.name}</div>
+            <div className="mt-0.5 font-mono text-[11px] text-olive-strong">{w.prescription}</div>
+          </li>
+        ))}
+      </ul>
+    </details>
+  );
+
   return (
     <div className="pb-24">
-      <Link href="/trening" className="text-sm text-muted hover:text-fg">
+      <Link href="/trening" className="font-mono text-xs uppercase tracking-wider text-muted hover:text-fg">
         ← Kalendarz treningów
       </Link>
-      <div className="mt-2 flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold">{session.title}</h1>
-          <p className="text-sm text-muted">
-            {formatDateLong(session.scheduled_date)} · tydzień {session.week} · {session.focus}
-          </p>
+      <div className="mt-3 flex flex-wrap items-end justify-between gap-3">
+        <div className="min-w-0">
+          <div className="eyebrow text-olive-strong">
+            Tydzień {session.week} · {formatDateLong(session.scheduled_date)}
+          </div>
+          <h1 className="mt-1 font-display text-4xl font-extrabold uppercase leading-[0.9] tracking-wide sm:text-5xl">{session.title}</h1>
+          <p className="mt-2 text-sm text-muted">{session.focus}</p>
         </div>
         <div className="flex items-center gap-2">
           {session.status === "completed" && <Badge tone="ok">Ukończony</Badge>}
@@ -82,16 +112,31 @@ export default function SessionPage() {
       </div>
 
       {/* Pasek stanu sesji */}
-      <div className="sticky top-0 z-30 -mx-4 mt-4 border-b border-line bg-bg/95 px-4 py-3 backdrop-blur sm:mx-0 sm:rounded-2xl sm:border">
-        <div className="flex flex-wrap items-center gap-3">
+      <div className="sticky top-14 z-20 -mx-4 mt-5 border-y border-line bg-bg/90 px-4 py-3 backdrop-blur-md sm:mx-0 sm:rounded-2xl sm:border md:top-3">
+        <div className="flex items-center gap-4">
           <div>
-            <div className="text-[11px] uppercase tracking-wide text-muted">Czas treningu</div>
-            <div className="text-2xl font-bold tabular-nums" role="timer" aria-live="off">
+            <div className="eyebrow">Czas</div>
+            <div className={cx("font-data text-[28px] font-semibold leading-none", session.status === "in_progress" && !session.paused_at && "text-olive-strong")} role="timer" aria-live="off">
               {formatDuration(session.status === "completed" ? (session.duration_sec ?? 0) : elapsed)}
             </div>
           </div>
-          <div className="text-sm text-muted">
-            Serie: <span className="font-semibold text-fg">{doneSets}</span>/{totalSets}
+          <div className="hidden min-w-0 flex-1 sm:block">
+            <div className="flex items-baseline justify-between">
+              <span className="eyebrow">Postęp</span>
+              <span className="font-data text-xs">
+                {doneSets}/{totalSets} serii · {pct}%
+              </span>
+            </div>
+            <div className="mt-1.5 flex gap-1" aria-hidden>
+              {exercises.map((e) => (
+                <div key={e.id} className="h-1.5 flex-1 overflow-hidden rounded-sm bg-surface-3">
+                  <div className={cx("bar-fill h-full", e.id === currentId ? "bg-olive-strong" : "bg-ok")} style={{ width: `${progressOf(e.id, e.sets, e.block === "conditioning") * 100}%` }} />
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="font-data text-sm text-muted sm:hidden">
+            Serie: <span className="text-fg">{doneSets}</span>/{totalSets}
           </div>
           <div className="ml-auto flex gap-2">
             {session.status === "planned" && (
@@ -101,12 +146,12 @@ export default function SessionPage() {
             )}
             {session.status === "in_progress" &&
               (session.paused_at ? (
-                <Button onClick={() => resumeSession(session.id)}>
-                  <IconPlay width={16} height={16} /> Wznów
+                <Button onClick={() => resumeSession(session.id)} aria-label="Wznów">
+                  <IconPlay width={16} height={16} /> <span className="hidden sm:inline">Wznów</span>
                 </Button>
               ) : (
-                <Button onClick={() => pauseSession(session.id)}>
-                  <IconPause width={16} height={16} /> Pauza
+                <Button onClick={() => pauseSession(session.id)} aria-label="Pauza">
+                  <IconPause width={16} height={16} /> <span className="hidden sm:inline">Pauza</span>
                 </Button>
               ))}
             {session.status === "in_progress" && (
@@ -116,56 +161,51 @@ export default function SessionPage() {
             )}
             {(session.status === "completed" || session.status === "skipped") && (
               <Button variant="outline" onClick={() => reopenSession(session.id)}>
-                Przywróć jako zaplanowany
+                Przywróć
               </Button>
             )}
           </div>
         </div>
+        <div className="mt-2 flex gap-1 sm:hidden" aria-hidden>
+          {exercises.map((e) => (
+            <div key={e.id} className="h-1 flex-1 overflow-hidden rounded-sm bg-surface-3">
+              <div className={cx("bar-fill h-full", e.id === currentId ? "bg-olive-strong" : "bg-ok")} style={{ width: `${progressOf(e.id, e.sets, e.block === "conditioning") * 100}%` }} />
+            </div>
+          ))}
+        </div>
       </div>
 
-      <div className="mt-4 flex flex-col gap-4">
+      <div className="mt-5 flex flex-col gap-4">
         <Notice title={WEEK_PHASES[session.week]?.name}>{session.phase_note}</Notice>
 
-        <Card title="Rozgrzewka dynamiczna" subtitle="ok. 8 min — przygotowanie stawów i układu nerwowego">
-          <ul className="grid gap-3 sm:grid-cols-2">
-            {session.warmup.map((w) => (
-              <li key={w.exercise_id} className="flex items-center gap-3 rounded-xl bg-surface-2 p-2">
-                <ExerciseAnimation exerciseId={w.exercise_id} size="sm" />
-                <div>
-                  <div className="text-sm font-medium">{EXERCISE_MAP[w.exercise_id]?.name}</div>
-                  <div className="text-xs text-muted">{w.prescription}</div>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </Card>
+        {drill(session.warmup, "Rozgrzewka dynamiczna", "00 · ok. 8 min")}
 
         {blocks.map((b) => (
           <section key={b} aria-label={BLOCK_LABELS[b]}>
-            <h2 className="mb-2 mt-2 text-sm font-semibold uppercase tracking-wide text-olive-strong">{BLOCK_LABELS[b]}</h2>
+            <div className="mb-2 mt-3 flex items-center gap-3">
+              <h2 className="font-display text-lg font-bold uppercase tracking-[0.12em] text-olive-strong">{BLOCK_LABELS[b]}</h2>
+              <div aria-hidden className="h-px flex-1 bg-gradient-to-r from-line-strong to-transparent" />
+            </div>
             <div className="flex flex-col gap-3">
               {exercises
                 .filter((e) => e.block === b)
                 .map((we) => (
-                  <ExerciseCard key={we.id} we={we} session={session} sets={allSets.filter((s) => s.workout_exercise_id === we.id)} history={historyFor.get(we.id) ?? []} editable={editable} />
+                  <ExerciseCard
+                    key={we.id}
+                    we={we}
+                    session={session}
+                    sets={allSets.filter((s) => s.workout_exercise_id === we.id)}
+                    history={historyFor.get(we.id) ?? []}
+                    editable={editable}
+                    index={++idx}
+                    current={we.id === currentId && session.status !== "skipped"}
+                  />
                 ))}
             </div>
           </section>
         ))}
 
-        <Card title="Schłodzenie" subtitle="ok. 5 min — powrót tętna, rozciąganie">
-          <ul className="grid gap-3 sm:grid-cols-2">
-            {session.cooldown.map((w) => (
-              <li key={w.exercise_id} className="flex items-center gap-3 rounded-xl bg-surface-2 p-2">
-                <ExerciseAnimation exerciseId={w.exercise_id} size="sm" />
-                <div>
-                  <div className="text-sm font-medium">{EXERCISE_MAP[w.exercise_id]?.name}</div>
-                  <div className="text-xs text-muted">{w.prescription}</div>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </Card>
+        {drill(session.cooldown, "Schłodzenie", "99 · ok. 5 min")}
 
         <Card title="Notatki z treningu">
           <Textarea aria-label="Notatki" value={notes} onChange={(e) => setNotes(e.target.value)} onBlur={() => updateSessionNotes(session.id, notes)} placeholder="Samopoczucie, ból, sprzęt, uwagi do techniki…" />
